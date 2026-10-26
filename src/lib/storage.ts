@@ -1,24 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { DocumentChunk, DocumentMetadata, QuizResult, RevisionPlan, Topic } from "./types";
 import { INITIAL_SAMPLE_TOPICS, SAMPLE_CHUNKS, SAMPLE_DOCUMENTS } from "./sampleData";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+import { getSupabaseConfig } from "./supabaseConfig";
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(
-    supabaseUrl &&
-    supabaseUrl.startsWith("https://") &&
-    !supabaseUrl.includes("your-project") &&
-    (supabaseAnonKey || supabaseServiceKey)
-  );
+  return getSupabaseConfig().isConfigured;
 }
 
 function getSupabaseClient() {
-  if (!isSupabaseConfigured()) return null;
-  const key = supabaseServiceKey || supabaseAnonKey!;
-  return createClient(supabaseUrl!, key);
+  const cfg = getSupabaseConfig();
+  if (!cfg.isConfigured || !cfg.url) return null;
+  const key = cfg.serviceKey || cfg.anonKey;
+  if (!key) return null;
+  return createClient(cfg.url, key);
 }
 
 // In-memory persistent state for Demo Mode & Local testing

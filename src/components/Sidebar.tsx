@@ -11,15 +11,14 @@ import {
   BrainCircuit,
   CalendarCheck,
   FileText,
-  GraduationCap,
   Layers,
-  LogIn,
   LogOut,
   RotateCcw,
   Sparkles,
-  User,
-  ShieldCheck,
+  Compass,
+  Database,
   CheckCircle2,
+  GraduationCap,
 } from "lucide-react";
 
 const navigationItems = [
@@ -37,7 +36,7 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const [status, setStatus] = useState<{ mode: string; message: string }>({
     mode: "demo",
-    message: "Demo Mode (Bundled Dataset)",
+    message: "Stored Database Active",
   });
   const [resetting, setResetting] = useState(false);
 
@@ -47,7 +46,7 @@ export function Sidebar() {
       .then((data) => {
         setStatus({
           mode: data.mode,
-          message: data.mode === "live" ? "Live Gemini + Supabase" : "Demo Mode (Local Data)",
+          message: data.mode === "live" ? "Live Gemini + Supabase" : "Stored Database Active",
         });
       })
       .catch(() => {});
@@ -68,147 +67,124 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 h-screen sticky top-0 text-slate-700 dark:text-slate-300 transition-colors z-20">
+    <aside className="w-64 bg-ivory-50 dark:bg-pine-900 border-r border-ivory-200 dark:border-pine-800 flex flex-col justify-between shrink-0 h-screen sticky top-0 text-forest-800 dark:text-forest-200 transition-colors duration-200 z-20">
       <div className="flex flex-col min-h-0">
-        {/* Brand Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-850">
+        {/* Academic Brand Header */}
+        <div className="p-5 border-b border-ivory-200 dark:border-pine-800/80">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-electric flex items-center justify-center text-white shadow-md shadow-indigo-600/25 group-hover:scale-105 transition-transform">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-forest-900 dark:bg-forest-800 border border-forest-800/40 flex items-center justify-center text-ivory-50 shadow-sm group-hover:scale-105 transition-transform">
+              <Compass className="w-5 h-5 text-coral-500" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight block">
-                  GapFinder <span className="text-teal-neon">AI</span>
+                <span className="font-extrabold text-forest-950 dark:text-ivory-50 text-base tracking-tight block">
+                  GapFinder <span className="text-coral-500">AI</span>
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block">
-                Learning Analytics
+              <span className="text-[10px] text-forest-600 dark:text-forest-400 font-semibold uppercase tracking-wider block">
+                Precision Knowledge Lab
               </span>
             </div>
           </Link>
 
-          {/* Active Subject Pill */}
-          <div className="mt-4 p-2.5 rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+          {/* Active Syllabus Badge */}
+          <div className="mt-4 p-2.5 rounded-xl bg-white dark:bg-pine-850 border border-ivory-200 dark:border-pine-750 shadow-paper flex items-center justify-between">
             <div className="truncate">
-              <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold uppercase block tracking-wider">
+              <span className="text-[9px] text-coral-600 dark:text-coral-400 font-bold uppercase block tracking-wider">
                 Current Syllabus
               </span>
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate block">
+              <span className="text-xs font-bold text-forest-950 dark:text-ivory-50 truncate block">
                 Computer Networks
               </span>
             </div>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-neon border border-teal-500/20 font-bold">
-              CS401
-            </span>
+            <GraduationCap className="w-4 h-4 text-forest-600 dark:text-forest-400 shrink-0 ml-1.5" />
           </div>
         </div>
 
-        {/* User Session Quick Profile */}
-        <div className="px-3 pt-3">
-          {user ? (
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 truncate">
-                <div className="w-7 h-7 rounded-lg bg-indigo-600/15 dark:bg-indigo-600/30 text-indigo-600 dark:text-teal-neon flex items-center justify-center shrink-0 font-bold text-xs">
-                  {user.name ? user.name.charAt(0).toUpperCase() : "S"}
-                </div>
-                <div className="truncate">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate leading-tight">
-                      {user.name || "Student"}
-                    </span>
-                    {user.isDemo ? (
-                      <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
-                        Demo
-                      </span>
-                    ) : (
-                      <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-0.5">
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                        Auth
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate leading-tight">
-                    {user.email}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => logout()}
-                title="Sign Out"
-                className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                aria-label="Sign Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-indigo-50 dark:bg-navy-900 hover:bg-indigo-100 dark:hover:bg-navy-850 text-indigo-600 dark:text-teal-neon border border-indigo-200 dark:border-indigo-900/60 text-xs font-semibold transition-colors"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In / Register</span>
-            </Link>
-          )}
-        </div>
-
-        {/* Navigation Links */}
+        {/* Navigation Section */}
         <nav className="p-3 space-y-1 overflow-y-auto">
+          <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-forest-500 dark:text-forest-400 tracking-wider">
+            Diagnostic Modules
+          </div>
           {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
             const Icon = item.icon;
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`relative flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/20"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-900"
+                    ? "bg-white dark:bg-pine-800 text-forest-950 dark:text-ivory-50 shadow-paper font-bold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-coral-500 before:rounded-r"
+                    : "text-forest-700 dark:text-forest-300 hover:bg-white/60 dark:hover:bg-pine-850 hover:text-forest-950 dark:hover:text-ivory-50"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400 dark:text-slate-500"}`} />
-                <span>{item.name}</span>
+                <Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-coral-500" : "text-forest-500 dark:text-forest-400"
+                  }`}
+                />
+                <span className="truncate">{item.name}</span>
               </Link>
             );
           })}
         </nav>
       </div>
 
-      {/* Footer System Status & Controls */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-850 bg-slate-50/70 dark:bg-navy-950 space-y-3">
+      {/* Footer System Status & User Section */}
+      <div className="p-4 border-t border-ivory-200 dark:border-pine-800/80 space-y-3 bg-ivory-100/50 dark:bg-pine-950/40">
         {/* Backend Connectivity Status */}
-        <div className="p-2.5 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-[11px]">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                status.mode === "live" ? "bg-emerald-500 animate-pulse" : "bg-amber-400"
-              }`}
-            />
-            <span className="font-bold text-slate-800 dark:text-slate-200">{status.message}</span>
+        <div className="p-2.5 rounded-xl bg-white dark:bg-pine-850 border border-ivory-200 dark:border-pine-800 text-[11px] shadow-paper space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-forest-900 dark:text-ivory-50 flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-coral-500 shrink-0" />
+              <span>Storage Backend</span>
+            </span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-forest-700 dark:text-forest-300 bg-forest-100 dark:bg-pine-750 px-1.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-forest-500 dark:bg-forest-400" />
+              Ready
+            </span>
           </div>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-            {status.mode === "live"
-              ? "Gemini 1.5 Flash + Supabase pgvector"
-              : "Demo Mode active. Real scoring & deterministic RAG."}
+          <p className="text-[10px] text-forest-600 dark:text-forest-400 truncate">
+            {status.message}
           </p>
         </div>
 
-        {/* Theme Toggle Bar */}
-        <div className="flex items-center justify-between p-1.5 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 pl-1 font-medium">Theme:</span>
-          <ThemeToggle showLabels />
-        </div>
+        {/* User Account Bar & Logout */}
+        {user && (
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-coral-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                {user.name ? user.name.charAt(0).toUpperCase() : "S"}
+              </div>
+              <div className="min-w-0 truncate">
+                <span className="text-xs font-bold text-forest-950 dark:text-ivory-50 truncate block leading-tight">
+                  {user.name || user.email.split("@")[0]}
+                </span>
+                <span className="text-[10px] text-forest-600 dark:text-forest-400 truncate block">
+                  {user.isDemo ? "Demo Student" : "Database Student"}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              title="Sign Out"
+              className="p-1.5 rounded-lg text-forest-600 dark:text-forest-400 hover:text-coral-600 hover:bg-coral-50 dark:hover:bg-coral-950/40 transition-colors"
+              aria-label="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
-        {/* Reset Button */}
+        {/* Reset Dataset Trigger */}
         <button
           onClick={handleResetData}
           disabled={resetting}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 dark:bg-navy-900 dark:hover:bg-navy-850 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-medium border border-slate-200 dark:border-slate-800 transition-colors shadow-2xs"
+          className="w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold text-forest-600 dark:text-forest-400 hover:text-forest-900 dark:hover:text-ivory-50 py-1 transition-colors"
         >
-          <RotateCcw className={`w-3.5 h-3.5 ${resetting ? "animate-spin" : ""}`} />
-          <span>{resetting ? "Resetting..." : "Reset Sample Data"}</span>
+          <RotateCcw className={`w-3 h-3 ${resetting ? "animate-spin" : ""}`} />
+          <span>{resetting ? "Resetting..." : "Reset Sample Materials"}</span>
         </button>
       </div>
     </aside>

@@ -21,7 +21,7 @@ export function ThemeToggle({ className = "", showLabels = false }: ThemeToggleP
   if (!mounted) {
     return (
       <div
-        className={`w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-navy-900/50 animate-pulse ${className}`}
+        className={`w-9 h-9 rounded-xl border border-ivory-200 dark:border-pine-800 bg-white/50 dark:bg-pine-900/50 animate-pulse ${className}`}
         aria-hidden="true"
       />
     );
@@ -40,40 +40,40 @@ export function ThemeToggle({ className = "", showLabels = false }: ThemeToggleP
   return (
     <div className={`relative inline-flex items-center ${className}`}>
       {showLabels ? (
-        <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+        <div className="flex items-center p-1 rounded-xl bg-ivory-100 dark:bg-pine-900 border border-ivory-200 dark:border-pine-800 text-xs font-semibold">
           <button
             type="button"
             onClick={() => setTheme("light")}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               theme === "light"
-                ? "bg-white dark:bg-navy-800 text-indigo-600 dark:text-teal-neon shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                ? "bg-white dark:bg-pine-800 text-forest-950 dark:text-ivory-50 shadow-paper font-bold"
+                : "text-forest-600 hover:text-forest-950 dark:text-forest-400 dark:hover:text-ivory-50"
             }`}
             aria-label="Light mode"
           >
-            <Sun className="w-3.5 h-3.5" />
-            <span>Light</span>
+            <Sun className="w-3.5 h-3.5 text-amber-600" />
+            <span>Ivory</span>
           </button>
           <button
             type="button"
             onClick={() => setTheme("dark")}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               theme === "dark"
-                ? "bg-white dark:bg-navy-800 text-indigo-600 dark:text-teal-neon shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                ? "bg-white dark:bg-pine-800 text-forest-950 dark:text-ivory-50 shadow-paper font-bold"
+                : "text-forest-600 hover:text-forest-950 dark:text-forest-400 dark:hover:text-ivory-50"
             }`}
             aria-label="Dark mode"
           >
-            <Moon className="w-3.5 h-3.5" />
-            <span>Dark</span>
+            <Moon className="w-3.5 h-3.5 text-coral-400" />
+            <span>Pine</span>
           </button>
           <button
             type="button"
             onClick={() => setTheme("system")}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               theme === "system"
-                ? "bg-white dark:bg-navy-800 text-indigo-600 dark:text-teal-neon shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                ? "bg-white dark:bg-pine-800 text-forest-950 dark:text-ivory-50 shadow-paper font-bold"
+                : "text-forest-600 hover:text-forest-950 dark:text-forest-400 dark:hover:text-ivory-50"
             }`}
             aria-label="System default theme"
           >
@@ -85,16 +85,16 @@ export function ThemeToggle({ className = "", showLabels = false }: ThemeToggleP
         <button
           type="button"
           onClick={cycleTheme}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 shadow-xs transition-colors flex items-center justify-center group"
-          title={`Current theme: ${theme}. Click to switch theme (Light → Dark → System)`}
+          className="p-2 rounded-xl border border-ivory-200 dark:border-pine-800 bg-white dark:bg-pine-850 text-forest-800 dark:text-forest-200 hover:bg-ivory-100 dark:hover:bg-pine-800 shadow-paper transition-colors flex items-center justify-center group"
+          title={`Theme: ${theme}. Click to switch theme (Ivory Light → Pine Dark → Auto)`}
           aria-label={`Current theme: ${theme}. Toggle theme`}
         >
           {theme === "dark" ? (
-            <Moon className="w-4 h-4 text-teal-neon transition-transform group-hover:rotate-12" />
+            <Moon className="w-4 h-4 text-coral-400 transition-transform group-hover:rotate-12" />
           ) : theme === "light" ? (
-            <Sun className="w-4 h-4 text-amber-500 transition-transform group-hover:rotate-45" />
+            <Sun className="w-4 h-4 text-amber-600 transition-transform group-hover:rotate-45" />
           ) : (
-            <Laptop className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <Laptop className="w-4 h-4 text-forest-600 dark:text-forest-400" />
           )}
         </button>
       )}

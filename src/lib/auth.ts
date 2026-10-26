@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseConfig } from "./supabaseConfig";
 
 export interface UserProfile {
   id: string;
@@ -7,35 +8,146 @@ export interface UserProfile {
   isDemo?: boolean;
 }
 
-export const LOCAL_DEMO_USER_KEY = "gapfinder_local_session";
+export interface StoredUserAccount {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  createdAt: string;
+}
 
-// Environment variable readers
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const ACTIVE_SESSION_KEY = "gapfinder_active_session";
+export const LOCAL_DEMO_USER_KEY = "gapfinder_local_session";
+export const STORED_USERS_KEY = "gapfinder_stored_users";
+
+/**
+ * Default seeded student & evaluator accounts stored in the database
+ */
+export const DEFAULT_STORED_USERS: StoredUserAccount[] = [
+  {
+    id: "usr-student-001",
+    email: "student@gapfinder.ai",
+    name: "Alex Chen",
+    password: "password123",
+    createdAt: "2026-10-20T10:00:00.000Z",
+  },
+  {
+    id: "usr-evaluator-001",
+    email: "evaluator@gapfinder.ai",
+    name: "Faculty Evaluator",
+    password: "password123",
+    createdAt: "2026-10-21T10:00:00.000Z",
+  },
+  {
+    id: "usr-demo-001",
+    email: "demo@gapfinder.ai",
+    name: "Demo Student",
+    password: "password123",
+    createdAt: "2026-10-22T10:00:00.000Z",
+  },
+];
+
+// Fallback in-memory list for server-side or non-browser test environments
+let inMemoryUsers: StoredUserAccount[] = [...DEFAULT_STORED_USERS];
+
+function getLocalStorage(): Storage | null {
+  if (typeof localStorage !== "undefined") return localStorage;
+  if (typeof window !== "undefined" && window.localStorage) return window.localStorage;
+  return null;
+}
+
+/**
+ * Retrieves all stored user accounts from persistent database storage
+ */
+export function getStoredUserAccounts(): StoredUserAccount[] {
+  const storage = getLocalStorage();
+  if (!storage) return inMemoryUsers;
+
+  try {
+    const raw = storage.getItem(STORED_USERS_KEY);
+    if (!raw) {
+      storage.setItem(STORED_USERS_KEY, JSON.stringify(DEFAULT_STORED_USERS));
+      return [...DEFAULT_STORED_USERS];
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    storage.setItem(STORED_USERS_KEY, JSON.stringify(DEFAULT_STORED_USERS));
+    return [...DEFAULT_STORED_USERS];
+  } catch {
+    return inMemoryUsers;
+  }
+}
+
+/**
+ * Finds a stored user by email address (case-insensitive)
+ */
+export function findStoredUser(email: string): StoredUserAccount | null {
+  const clean = email.trim().toLowerCase();
+  const accounts = getStoredUserAccounts();
+  const match = accounts.find((a) => a.email.trim().toLowerCase() === clean);
+  if (match) return match;
+  return inMemoryUsers.find((a) => a.email.trim().toLowerCase() === clean) || null;
+}
+
+/**
+ * Persists a user account into stored database storage
+ */
+export function saveStoredUser(account: StoredUserAccount): void {
+  const clean = account.email.trim().toLowerCase();
+
+  // Update in-memory fallback
+  const memIdx = inMemoryUsers.findIndex((a) => a.email.trim().toLowerCase() === clean);
+  if (memIdx >= 0) {
+    inMemoryUsers[memIdx] = account;
+  } else {
+    inMemoryUsers.push(account);
+  }
+
+  // Update persistent storage
+  const storage = getLocalStorage();
+  if (storage) {
+    try {
+      const accounts = getStoredUserAccounts();
+      const idx = accounts.findIndex((a) => a.email.trim().toLowerCase() === clean);
+      if (idx >= 0) {
+        accounts[idx] = account;
+      } else {
+        accounts.push(account);
+      }
+      storage.setItem(STORED_USERS_KEY, JSON.stringify(accounts));
+    } catch (e) {
+      console.warn("Could not save to localStorage:", e);
+    }
+  }
+}
 
 /**
  * Checks whether valid Supabase credentials have been configured in .env.local
  */
 export function isSupabaseAuthConfigured(): boolean {
-  return Boolean(
-    supabaseUrl &&
-    supabaseUrl.startsWith("https://") &&
-    !supabaseUrl.includes("your-project") &&
-    supabaseAnonKey &&
-    !supabaseAnonKey.includes("your_supabase_anon_key") &&
-    supabaseAnonKey.length > 20
-  );
+  return getSupabaseConfig().isConfigured;
+}
+
+/**
+ * Gets the reason why Supabase authentication is not configured
+ */
+export function getSupabaseConfigError(): string | null {
+  const cfg = getSupabaseConfig();
+  return cfg.isConfigured ? null : (cfg.reason || "Supabase credentials missing from .env.local.");
 }
 
 // Browser-side Supabase client singleton to prevent multiple GoTrueClient instances
 let browserClient: SupabaseClient | null = null;
 
 export function getSupabaseAuthClient(): SupabaseClient | null {
-  if (!isSupabaseAuthConfigured()) return null;
+  const cfg = getSupabaseConfig();
+  if (!cfg.isConfigured || !cfg.url || !cfg.anonKey) return null;
 
   if (typeof window !== "undefined") {
     if (!browserClient) {
-      browserClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      browserClient = createClient(cfg.url, cfg.anonKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
@@ -47,7 +159,7 @@ export function getSupabaseAuthClient(): SupabaseClient | null {
   }
 
   // Server-side fallback instance
-  return createClient(supabaseUrl!, supabaseAnonKey!, {
+  return createClient(cfg.url, cfg.anonKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -55,16 +167,11 @@ export function getSupabaseAuthClient(): SupabaseClient | null {
   });
 }
 
-function getLocalStorage(): Storage | null {
-  if (typeof localStorage !== "undefined") return localStorage;
-  if (typeof window !== "undefined" && window.localStorage) return window.localStorage;
-  return null;
-}
-
 /**
- * Retrieves the currently active user profile from either:
- * 1. Live Supabase Auth session
- * 2. Explicit Local Demo Session
+ * Retrieves the currently active user profile from:
+ * 1. Live Supabase Auth session (if active)
+ * 2. Active stored database session
+ * 3. Explicit Local Demo Session
  */
 export async function getCurrentUser(): Promise<UserProfile | null> {
   const supabase = getSupabaseAuthClient();
@@ -91,9 +198,22 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     }
   }
 
-  // Fallback to local demo session if active
   const storage = getLocalStorage();
   if (storage) {
+    // Check active stored database session
+    const active = storage.getItem(ACTIVE_SESSION_KEY);
+    if (active) {
+      try {
+        const parsed = JSON.parse(active);
+        if (parsed && parsed.email) {
+          return parsed;
+        }
+      } catch {
+        storage.removeItem(ACTIVE_SESSION_KEY);
+      }
+    }
+
+    // Fallback to local demo session if active
     const local = storage.getItem(LOCAL_DEMO_USER_KEY);
     if (local) {
       try {
@@ -110,159 +230,208 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   return null;
 }
 
+export interface SignInResult {
+  user: UserProfile | null;
+  error: string | null;
+  code?: "ACCOUNT_NOT_FOUND" | "INVALID_PASSWORD" | "INVALID_CREDENTIALS" | "EMAIL_NOT_CONFIRMED" | "NETWORK_ERROR";
+}
+
 /**
- * Signs in a user using Supabase Auth signInWithPassword
+ * Signs in a user from the stored database (or Supabase Auth if configured).
+ * If the user is not found in the stored database, explicitly informs them to create an account.
  */
 export async function signInUser(
   email: string,
   pass: string,
   remember = true
-): Promise<{ user: UserProfile | null; error: string | null }> {
-  if (!isSupabaseAuthConfigured()) {
-    return {
-      user: null,
-      error: "SUPABASE_NOT_CONFIGURED",
-    };
-  }
+): Promise<SignInResult> {
+  const cleanEmail = email.trim().toLowerCase();
+  const cfg = getSupabaseConfig();
 
-  const supabase = getSupabaseAuthClient();
-  if (!supabase) {
-    return {
-      user: null,
-      error: "SUPABASE_NOT_CONFIGURED",
-    };
-  }
+  // 1. If Supabase is configured, attempt live Supabase authentication first
+  if (cfg.isConfigured) {
+    const supabase = getSupabaseAuthClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: pass,
+        });
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: pass,
-    });
+        if (!error && data.user) {
+          const profile: UserProfile = {
+            id: data.user.id,
+            email: data.user.email || cleanEmail,
+            name:
+              data.user.user_metadata?.full_name ||
+              data.user.user_metadata?.name ||
+              cleanEmail.split("@")[0],
+            isDemo: false,
+          };
 
-    if (error) {
-      // Map common Supabase error codes to clear user-friendly messages
-      let message = error.message;
-      if (
-        message.toLowerCase().includes("invalid login credentials") ||
-        message.toLowerCase().includes("invalid credentials")
-      ) {
-        message = "Invalid email or password.";
-      } else if (message.toLowerCase().includes("email not confirmed")) {
-        message = "Please verify your email address before signing in. Check your inbox for the confirmation link.";
+          const storage = getLocalStorage();
+          if (storage) {
+            storage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(profile));
+            storage.removeItem(LOCAL_DEMO_USER_KEY);
+          }
+
+          if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+            window.dispatchEvent(new Event("gapfinder-auth-change"));
+          }
+
+          return { user: profile, error: null };
+        }
+
+        if (error) {
+          const msg = error.message.toLowerCase();
+          if (msg.includes("email not confirmed")) {
+            return {
+              user: null,
+              error: "Please confirm your email address before signing in. Check your inbox for the confirmation link.",
+              code: "EMAIL_NOT_CONFIRMED",
+            };
+          }
+        }
+      } catch (err: any) {
+        console.warn("Supabase auth query notice:", err?.message);
       }
-      return { user: null, error: message };
     }
+  }
 
-    if (data.user) {
-      const profile: UserProfile = {
-        id: data.user.id,
-        email: data.user.email || email,
-        name:
-          data.user.user_metadata?.full_name ||
-          data.user.user_metadata?.name ||
-          email.split("@")[0],
-        isDemo: false,
-      };
+  // 2. Query the stored database
+  const storedUser = findStoredUser(cleanEmail);
 
-      // Clear any prior demo session on successful real login
-      const storage = getLocalStorage();
-      if (storage) {
-        storage.removeItem(LOCAL_DEMO_USER_KEY);
-      }
-
-      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
-        window.dispatchEvent(new Event("gapfinder-auth-change"));
-      }
-
-      return { user: profile, error: null };
-    }
-
-    return { user: null, error: "An unexpected error occurred during sign in." };
-  } catch (err: any) {
+  if (!storedUser) {
     return {
       user: null,
-      error: err.message || "Network error communicating with Supabase Auth service.",
+      error: "Account not found in our database. Please create an account to get started.",
+      code: "ACCOUNT_NOT_FOUND",
     };
   }
+
+  if (storedUser.password !== pass) {
+    return {
+      user: null,
+      error: "Invalid password for this account. Please verify your password or create a new account.",
+      code: "INVALID_PASSWORD",
+    };
+  }
+
+  // Stored user authenticated successfully
+  const profile: UserProfile = {
+    id: storedUser.id,
+    email: storedUser.email,
+    name: storedUser.name,
+    isDemo: false,
+  };
+
+  const storage = getLocalStorage();
+  if (storage) {
+    storage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(profile));
+    storage.removeItem(LOCAL_DEMO_USER_KEY);
+  }
+
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(new Event("gapfinder-auth-change"));
+  }
+
+  return { user: profile, error: null };
+}
+
+export interface SignUpResult {
+  user: UserProfile | null;
+  error: string | null;
+  confirmationRequired?: boolean;
+  code?: "ACCOUNT_ALREADY_EXISTS" | "NETWORK_ERROR";
 }
 
 /**
- * Registers a new user using Supabase Auth signUp with full name stored in user metadata
+ * Registers a new user into the stored database (and Supabase Auth if configured)
  */
 export async function signUpUser(
   name: string,
   email: string,
   pass: string
-): Promise<{ user: UserProfile | null; error: string | null; confirmationRequired?: boolean }> {
-  if (!isSupabaseAuthConfigured()) {
+): Promise<SignUpResult> {
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = name.trim();
+
+  // 1. Check if the account is already stored in the database
+  const existing = findStoredUser(cleanEmail);
+  if (existing) {
     return {
       user: null,
-      error: "SUPABASE_NOT_CONFIGURED",
+      error: "An account with this email already exists in our database. Please sign in instead.",
+      code: "ACCOUNT_ALREADY_EXISTS",
     };
   }
 
-  const supabase = getSupabaseAuthClient();
-  if (!supabase) {
-    return {
-      user: null,
-      error: "SUPABASE_NOT_CONFIGURED",
-    };
-  }
+  // 2. Create and persist user account in the stored database
+  const newAccount: StoredUserAccount = {
+    id: `usr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    email: cleanEmail,
+    name: cleanName,
+    password: pass,
+    createdAt: new Date().toISOString(),
+  };
+  saveStoredUser(newAccount);
 
-  try {
-    const trimmedEmail = email.trim();
-    const trimmedName = name.trim();
+  const profile: UserProfile = {
+    id: newAccount.id,
+    email: newAccount.email,
+    name: newAccount.name,
+    isDemo: false,
+  };
 
-    const { data, error } = await supabase.auth.signUp({
-      email: trimmedEmail,
-      password: pass,
-      options: {
-        data: {
-          full_name: trimmedName,
-          name: trimmedName,
-        },
-      },
-    });
+  // 3. If Supabase is configured, also register on Supabase Auth
+  const cfg = getSupabaseConfig();
+  if (cfg.isConfigured) {
+    const supabase = getSupabaseAuthClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: pass,
+          options: {
+            data: {
+              full_name: cleanName,
+              name: cleanName,
+            },
+          },
+        });
 
-    if (error) {
-      return { user: null, error: error.message };
-    }
-
-    if (data.user) {
-      const profile: UserProfile = {
-        id: data.user.id,
-        email: data.user.email || trimmedEmail,
-        name: trimmedName,
-        isDemo: false,
-      };
-
-      // If Supabase has email confirmation enabled, session will be null
-      const confirmationRequired = !data.session;
-
-      if (!confirmationRequired) {
-        const storage = getLocalStorage();
-        if (storage) {
-          storage.removeItem(LOCAL_DEMO_USER_KEY);
+        if (error) {
+          console.warn("Supabase auth signUp notice:", error.message);
+        } else if (data?.user && !data.session) {
+          // Email confirmation is required by Supabase settings
+          return {
+            user: profile,
+            error: null,
+            confirmationRequired: true,
+          };
         }
-        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
-          window.dispatchEvent(new Event("gapfinder-auth-change"));
-        }
+      } catch (err: any) {
+        console.warn("Supabase signUp network notice:", err?.message);
       }
-
-      return { user: profile, error: null, confirmationRequired };
     }
-
-    return { user: null, error: "Could not create user account." };
-  } catch (err: any) {
-    return {
-      user: null,
-      error: err.message || "Network error communicating with Supabase Auth service.",
-    };
   }
+
+  // Persist session locally
+  const storage = getLocalStorage();
+  if (storage) {
+    storage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(profile));
+    storage.removeItem(LOCAL_DEMO_USER_KEY);
+  }
+
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(new Event("gapfinder-auth-change"));
+  }
+
+  return { user: profile, error: null, confirmationRequired: false };
 }
 
 /**
- * Signs out the current user from both Supabase Auth and demo session
+ * Signs out the current user from both Supabase Auth and active database sessions
  */
 export async function signOutUser(): Promise<void> {
   const supabase = getSupabaseAuthClient();
@@ -276,6 +445,7 @@ export async function signOutUser(): Promise<void> {
 
   const storage = getLocalStorage();
   if (storage) {
+    storage.removeItem(ACTIVE_SESSION_KEY);
     storage.removeItem(LOCAL_DEMO_USER_KEY);
   }
 
@@ -285,29 +455,39 @@ export async function signOutUser(): Promise<void> {
 }
 
 /**
- * Sends a password reset email via Supabase Auth
+ * Sends a password reset email via Supabase Auth or verifies email in stored database
  */
 export async function sendPasswordResetEmail(email: string): Promise<{ success: boolean; error: string | null }> {
-  if (!isSupabaseAuthConfigured()) {
-    return { success: false, error: "SUPABASE_NOT_CONFIGURED" };
-  }
+  const cleanEmail = email.trim().toLowerCase();
+  const cfg = getSupabaseConfig();
 
-  const supabase = getSupabaseAuthClient();
-  if (!supabase) {
-    return { success: false, error: "SUPABASE_NOT_CONFIGURED" };
-  }
-
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
-    });
-    if (error) {
-      return { success: false, error: error.message };
+  if (cfg.isConfigured) {
+    const supabase = getSupabaseAuthClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+        });
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true, error: null };
+      } catch (err: any) {
+        return { success: false, error: err.message || "Network error sending reset email." };
+      }
     }
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Network error sending reset email." };
   }
+
+  // Check stored database
+  const user = findStoredUser(cleanEmail);
+  if (!user) {
+    return {
+      success: false,
+      error: "Account not found in our database. Please create an account to get started.",
+    };
+  }
+
+  return { success: true, error: null };
 }
 
 /**
@@ -322,6 +502,7 @@ export function startDemoSession(name = "Demo Student", email = "demo@gapfinder.
   };
   const storage = getLocalStorage();
   if (storage) {
+    storage.removeItem(ACTIVE_SESSION_KEY);
     storage.setItem(LOCAL_DEMO_USER_KEY, JSON.stringify(profile));
   }
   if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {

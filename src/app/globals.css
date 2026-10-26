@@ -3,19 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --border: #e2e8f0;
+  --background: #FAF8F3;
+  --foreground: #0E2922;
+  --card: #FFFFFF;
+  --card-foreground: #0E2922;
+  --border: #E8E0CE;
+  --primary: #E0533C;
+  --primary-foreground: #FFFFFF;
 }
 
 .dark {
-  --background: #0b0f19;
-  --foreground: #f8fafc;
-  --card: #111827;
-  --card-foreground: #f8fafc;
-  --border: #1e293b;
+  --background: #0A1714;
+  --foreground: #F0F7F4;
+  --card: #0F201C;
+  --card-foreground: #F0F7F4;
+  --border: #1B352F;
+  --primary: #E0533C;
+  --primary-foreground: #FFFFFF;
 }
 
 body {
@@ -23,7 +27,14 @@ body {
   background: var(--background);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Academic Paper & Card Accents */
+.academic-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgba(14, 41, 34, 0.05);
 }
 
 /* Custom scrollbars */
@@ -37,18 +48,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #C4B69B;
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #24443C;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #A89879;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #345C52;
 }
