@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   BarChart3,
   BookMarked,
@@ -10,11 +12,12 @@ import {
   CalendarCheck,
   FileText,
   GraduationCap,
-  HelpCircle,
   Layers,
+  LogIn,
+  LogOut,
   RotateCcw,
   Sparkles,
-  Zap,
+  User,
 } from "lucide-react";
 
 const navigationItems = [
@@ -29,6 +32,7 @@ const navigationItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [status, setStatus] = useState<{ mode: string; message: string }>({
     mode: "demo",
     message: "Demo Mode (Bundled Dataset)",
@@ -62,10 +66,10 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 h-screen sticky top-0 text-slate-300">
+    <aside className="w-64 bg-slate-900 dark:bg-slate-950 border-r border-slate-800 dark:border-slate-850 flex flex-col justify-between shrink-0 h-screen sticky top-0 text-slate-300 transition-colors">
       <div>
         {/* Brand Header */}
-        <div className="p-5 border-b border-slate-800">
+        <div className="p-5 border-b border-slate-800 dark:border-slate-850">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform">
               <GraduationCap className="w-6 h-6" />
@@ -81,7 +85,7 @@ export function Sidebar() {
           </Link>
 
           {/* Active Subject Pill */}
-          <div className="mt-4 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+          <div className="mt-4 p-2.5 rounded-xl bg-slate-800/80 dark:bg-slate-900 border border-slate-700/60 dark:border-slate-800 flex items-center justify-between">
             <div className="truncate">
               <span className="text-[10px] text-indigo-400 font-semibold uppercase block">
                 Active Subject
@@ -96,6 +100,43 @@ export function Sidebar() {
           </div>
         </div>
 
+        {/* User Session Quick Profile */}
+        <div className="px-3 pt-3">
+          {user ? (
+            <div className="p-2 rounded-xl bg-slate-800/50 dark:bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 truncate">
+                <div className="w-6 h-6 rounded-lg bg-indigo-600/40 text-indigo-300 flex items-center justify-center shrink-0">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+                <div className="truncate">
+                  <span className="font-semibold text-white block truncate leading-tight">
+                    {user.name || "Student"}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate leading-tight">
+                    {user.email}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => logout()}
+                title="Sign Out"
+                className="text-slate-400 hover:text-rose-400 p-1"
+                aria-label="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In / Create Account</span>
+            </Link>
+          )}
+        </div>
+
         {/* Navigation Links */}
         <nav className="p-3 space-y-1">
           {navigationItems.map((item) => {
@@ -108,7 +149,7 @@ export function Sidebar() {
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/70"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/70 dark:hover:bg-slate-900"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`} />
@@ -119,10 +160,10 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer System Status & Reset */}
-      <div className="p-4 border-t border-slate-800 bg-slate-900/50 space-y-3">
+      {/* Footer System Status & Controls */}
+      <div className="p-4 border-t border-slate-800 dark:border-slate-850 bg-slate-900/50 dark:bg-slate-950 space-y-3">
         {/* Mode Pill */}
-        <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/40 text-[11px]">
+        <div className="p-2.5 rounded-xl bg-slate-800/60 dark:bg-slate-900/80 border border-slate-700/40 dark:border-slate-800 text-[11px]">
           <div className="flex items-center gap-1.5 mb-1">
             <span
               className={`w-2 h-2 rounded-full ${
@@ -138,11 +179,17 @@ export function Sidebar() {
           </p>
         </div>
 
+        {/* Theme Toggle Bar */}
+        <div className="flex items-center justify-between p-1.5 rounded-xl bg-slate-800/40 dark:bg-slate-900/60 border border-slate-800 text-xs">
+          <span className="text-[11px] text-slate-400 pl-1 font-medium">Theme:</span>
+          <ThemeToggle showLabels />
+        </div>
+
         {/* Reset Button */}
         <button
           onClick={handleResetData}
           disabled={resetting}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 dark:border-slate-800 transition-colors"
         >
           <RotateCcw className={`w-3.5 h-3.5 ${resetting ? "animate-spin" : ""}`} />
           <span>{resetting ? "Resetting..." : "Reset Sample Data"}</span>

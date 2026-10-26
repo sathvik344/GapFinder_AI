@@ -3,7 +3,8 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Vitest-20%2F20%20Passing-brightgreen?logo=vitest)](https://vitest.dev/)
+[![Tests Passing](https://img.shields.io/badge/Vitest-35%2F35%20Passing-brightgreen?logo=vitest)](https://vitest.dev/)
+[![Dark / Light Theme](https://img.shields.io/badge/Theme-Dark%20%7C%20Light%20%7C%20System-6366F1)](https://github.com/pacocoursey/next-themes)
 [![Deployment](https://img.shields.io/badge/Vercel-Compatible-black?logo=vercel)](https://vercel.com/)
 
 **GapFinder AI** is an intelligent, full-stack learning platform designed to diagnose student knowledge gaps from uploaded syllabi, textbook chapters, lecture notes, and past question papers. It generates RAG-grounded diagnostic assessments, mathematically calculates topic mastery, explains misconceptions with source citations, and creates a personalized, spaced-repetition revision plan.
@@ -12,14 +13,16 @@
 
 ## Table of Contents
 1. [Core Features](#core-features)
-2. [Architecture Diagram](#architecture-diagram)
-3. [RAG Pipeline Explanation](#rag-pipeline-explanation)
-4. [Mastery Classification & Deterministic Scheduler Algorithms](#mastery-classification--deterministic-scheduler-algorithms)
-5. [Demo Dataset (Computer Networks)](#demo-dataset-computer-networks)
-6. [Quick Start & Installation](#quick-start--installation)
-7. [Supabase & Gemini Integration Setup](#supabase--gemini-integration-setup)
-8. [Automated Test Suite](#automated-test-suite)
-9. [Limitations & Future Enhancements Roadmap](#limitations--future-enhancements-roadmap)
+2. [Authentication & Theme System](#authentication--theme-system)
+3. [Architecture Diagram](#architecture-diagram)
+4. [RAG Pipeline Explanation](#rag-pipeline-explanation)
+5. [Mastery Classification & Deterministic Scheduler Algorithms](#mastery-classification--deterministic-scheduler-algorithms)
+6. [Demo Dataset (Computer Networks)](#demo-dataset-computer-networks)
+7. [Quick Start & Installation](#quick-start--installation)
+8. [GitHub & Vercel Deployment Instructions](#github--vercel-deployment-instructions)
+9. [Supabase & Gemini Integration Setup](#supabase--gemini-integration-setup)
+10. [Automated Test Suite](#automated-test-suite)
+11. [Limitations & Future Enhancements Roadmap](#limitations--future-enhancements-roadmap)
 
 ---
 
@@ -46,11 +49,31 @@
 
 ---
 
+## Authentication & Theme System
+
+### 1. Authentication UI (`/login` & `/register`)
+- **Responsive Auth Pages**: Clean, modern education SaaS aesthetics with educational vector illustrations, show/hide password toggles, and form field validation.
+- **Dual Mode Operation**:
+  - **Supabase Auth Integration**: When Supabase credentials are configured in `.env.local`, uses secure Supabase email/password sessions, registration, and logout.
+  - **Evaluator Demo Session Mode**: When Supabase credentials are not configured, displays an informative setup guide with an instant **"Explore with Demo Session"** action so reviewers can test every protected feature immediately without roadblocks.
+- **Session Management**: Persistent auth context via `AuthContext.tsx` with sign-out support in the top header.
+
+### 2. Dark Mode and Light Mode (`next-themes`)
+- **Theme Modes**: Supports **Light**, **Dark**, and **System** preference with a persistent theme toggle in the dashboard header, sidebar, and login page.
+- **No Hydration Mismatches**: Safe client-side mounting checks with `suppressHydrationWarning` on `<html>`.
+- **Semantic Palette**:
+  - **Light Theme**: Crisp whites (`#FFFFFF`), neutral slates (`#F8FAFC`), deep charcoal headings (`#0F172A`), and vibrant indigo accents (`#4F46E5`).
+  - **Dark Theme**: Rich dark slates (`#0B0F19`), card surfaces (`#111827`, `#1E293B`), light-gray text (`#F9FAFB`), high-contrast borders (`#334155`), and luminous indigo accents.
+- All cards, charts, badges, modals, quizzes, and code blocks adapt cleanly across both themes.
+
+---
+
 ## Architecture Diagram
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client (Next.js 14 App Router + React + Tailwind)"]
+    subgraph Client ["Client (Next.js 14 App Router + React + Tailwind + next-themes)"]
+        UI_Auth["Auth (/login, /register)"]
         UI_Dash["Dashboard (/)"]
         UI_Materials["Materials & Corpus (/materials)"]
         UI_TopicMap["Topic Map (/topic-map)"]
@@ -68,6 +91,7 @@ flowchart TD
         API_Gap["/api/gap-report (Analytics Engine)"]
         API_Plan["/api/revision-plan (Deterministic Scheduler)"]
         API_Chat["/api/chat (Grounded Tutor)"]
+        API_Status["/api/status (Config & Backend Health)"]
     end
 
     subgraph Engine ["Core Logic & Algorithms"]
@@ -79,7 +103,7 @@ flowchart TD
 
     subgraph Storage ["Storage & AI Backends"]
         LocalStore["Local Persistent Repository (Demo Mode)"]
-        Supabase["Supabase PostgreSQL + pgvector (Optional Live)"]
+        Supabase["Supabase PostgreSQL + pgvector + Auth (Optional Live)"]
         Gemini["Google Gemini 1.5 Flash + text-embedding (Optional Live)"]
     end
 
@@ -175,23 +199,57 @@ The project includes an authentic, pre-loaded dataset covering:
 - Node.js 18+ or 20+
 - npm or pnpm
 
-### 1. Clone & Install
+### 1. Local Run
 ```bash
-git clone https://github.com/your-username/gapfinder-ai.git
-cd gapfinder-ai
+# 1. Install dependencies
 npm install
-```
 
-### 2. Run the Development Server
-```bash
+# 2. Run unit tests
+npm test
+
+# 3. Type check
+npx tsc --noEmit
+
+# 4. Production build
+npm run build
+
+# 5. Start development server
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser. The application will start immediately in **Demo Mode** with the Computer Networks dataset preloaded.
 
-### 3. Build for Production
+---
+
+## GitHub & Vercel Deployment Instructions
+
+### 1. Push to GitHub
 ```bash
-npm run build
-npm run start
+git init
+git add .
+git commit -m "feat: complete GapFinder AI MVP with auth and dark mode"
+git branch -M main
+git remote add origin https://github.com/<your-username>/gapfinder-ai.git
+git push -u origin main
+```
+
+### 2. Deploy to Vercel
+
+#### Option A: Via Vercel Dashboard (Recommended)
+1. Go to [https://vercel.com/new](https://vercel.com/new).
+2. Import your GitHub repository (`gapfinder-ai`).
+3. Select **Next.js** as Framework Preset.
+4. Under **Environment Variables**, add:
+   - `GEMINI_API_KEY`: *(Optional for live AI)* Your Gemini API key from Google AI Studio.
+   - `NEXT_PUBLIC_SUPABASE_URL`: *(Optional for live PostgreSQL)* Supabase Project URL.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: *(Optional for live Supabase Auth)* Anon public key.
+   - `SUPABASE_SERVICE_ROLE_KEY`: *(Optional for server-side persistence)* Service role secret.
+5. Click **Deploy**.
+
+#### Option B: Via Vercel CLI
+```bash
+npm install -g vercel
+vercel
+vercel --prod
 ```
 
 ---
@@ -222,13 +280,13 @@ To connect live Gemini AI and Supabase PostgreSQL:
 
 ## Automated Test Suite
 
-Run the automated Vitest test suite covering quiz scoring, partial credit evaluation, mastery classification boundaries, weighted readiness calculation, and deterministic revision scheduling:
+Run the automated Vitest test suite covering quiz scoring, partial credit evaluation, mastery classification boundaries, weighted readiness calculation, deterministic revision scheduling, RAG pipeline, and authentication/theme handling:
 
 ```bash
 npm test
 ```
 
-### Test Coverage Summary:
+### Test Coverage Summary (35 Tests Across 7 Test Suites):
 - `tests/scoring.test.ts`:
   - Multiple choice scoring and string normalization.
   - Mastery level thresholds ($<60\%$ Weak, $60-79\%$ Medium, $\ge 80\%$ Strong).
@@ -244,6 +302,15 @@ npm test
   - Cosine similarity vector math.
   - Text chunking with sliding window and metadata preservation.
   - Top-K retrieval by semantic relevance.
+- `tests/ragPipeline.test.ts`:
+  - End-to-end RAG chunking and context retrieval.
+  - Grounded question generation and citation integrity.
+- `tests/diagnosticEngine.test.ts`:
+  - Score blending with historical student attempts.
+  - Topic priority and revision plan recalibration.
+- `tests/authAndTheme.test.ts`:
+  - Supabase configuration boundary checks.
+  - Local session creation, retrieval, and sign-out.
 
 ---
 

@@ -93,7 +93,7 @@ export default function MaterialsPage() {
       if (res.ok) {
         setStatusMsg({
           type: "success",
-          text: `Document processed successfully! Extracted ${data.chunksCreated} chunks.`,
+          text: `Document processed successfully! Extracted ${data.chunksCreated} chunks across ${data.pagesExtracted || 1} pages.`,
         });
         setFile(null);
         setCustomTitle("");
@@ -130,26 +130,28 @@ export default function MaterialsPage() {
         subtitle="Manage syllabi, textbooks, and past papers. Extracted chunks are embedded for RAG."
       />
 
-      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 space-y-8">
         {/* Upload Form Box */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Upload className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 <span>Upload New Study Material</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Supported formats: PDF (.pdf), Plain Text (.txt), Markdown (.md).
               </p>
             </div>
 
-            <div className="flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab("upload")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeTab === "upload" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-600"
+                  activeTab === "upload"
+                    ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400"
                 }`}
               >
                 Upload File
@@ -158,7 +160,9 @@ export default function MaterialsPage() {
                 type="button"
                 onClick={() => setActiveTab("direct")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeTab === "direct" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-600"
+                  activeTab === "direct"
+                    ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400"
                 }`}
               >
                 Paste Text
@@ -169,7 +173,7 @@ export default function MaterialsPage() {
           <form onSubmit={handleUpload} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Document Title (Optional)
                 </label>
                 <input
@@ -177,18 +181,18 @@ export default function MaterialsPage() {
                   placeholder="e.g. Chapter 4: Transport Layer Notes"
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Document Category
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="syllabus">Syllabus / Course Outline</option>
                   <option value="textbook">Textbook Chapter</option>
@@ -199,7 +203,7 @@ export default function MaterialsPage() {
             </div>
 
             {activeTab === "upload" ? (
-              <div className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50">
+              <div className="border-2 border-dashed border-slate-200 dark:border-slate-750 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-950/40">
                 <input
                   type="file"
                   id="file-upload"
@@ -208,8 +212,8 @@ export default function MaterialsPage() {
                   className="hidden"
                 />
                 <label htmlFor="file-upload" className="cursor-pointer block">
-                  <FileText className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-                  <span className="text-xs font-semibold text-slate-800 block">
+                  <FileText className="w-8 h-8 text-indigo-500 dark:text-indigo-400 mx-auto mb-2" />
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
                     {file ? file.name : "Click to select a PDF or text file"}
                   </span>
                   <span className="text-[11px] text-slate-400 mt-1 block">
@@ -219,7 +223,7 @@ export default function MaterialsPage() {
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Document Text / Notes
                 </label>
                 <textarea
@@ -227,7 +231,7 @@ export default function MaterialsPage() {
                   placeholder="Paste lecture notes or chapter content here..."
                   value={directText}
                   onChange={(e) => setDirectText(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
                 />
               </div>
             )}
@@ -236,8 +240,8 @@ export default function MaterialsPage() {
               <div
                 className={`p-3 rounded-xl flex items-center gap-2 text-xs font-medium ${
                   statusMsg.type === "success"
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-rose-50 text-rose-700 border border-rose-200"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                    : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                 }`}
               >
                 {statusMsg.type === "success" ? (
@@ -253,7 +257,7 @@ export default function MaterialsPage() {
               <button
                 type="submit"
                 disabled={uploading}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-xs disabled:opacity-50 flex items-center gap-2"
               >
                 {uploading ? (
                   <>
@@ -274,12 +278,12 @@ export default function MaterialsPage() {
         {/* Documents and Chunks Viewer */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Documents List */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                 Uploaded Materials ({documents.length})
               </h3>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {documents.reduce((acc, d) => acc + d.chunkCount, 0)} Total Chunks
               </span>
             </div>
@@ -293,21 +297,21 @@ export default function MaterialsPage() {
                     onClick={() => setSelectedDocId(doc.id)}
                     className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                       isSelected
-                        ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                        ? "border-indigo-600 dark:border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 shadow-xs"
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-850/50"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="truncate">
-                        <span className="text-xs font-bold text-slate-900 block truncate">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
                           {doc.name}
                         </span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 font-semibold uppercase text-slate-600">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-semibold uppercase text-slate-600 dark:text-slate-300">
                             {doc.category.replace("_", " ")}
                           </span>
                           {doc.isSample && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 font-semibold">
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
                               Sample Data
                             </span>
                           )}
@@ -325,7 +329,7 @@ export default function MaterialsPage() {
                       )}
                     </div>
 
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                       <span>{doc.chunkCount} RAG chunks</span>
                       <span>Page count: {doc.pageCount || 1}</span>
                     </div>
@@ -336,14 +340,14 @@ export default function MaterialsPage() {
           </div>
 
           {/* Chunks Inspector */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <span>RAG Vector Chunks ({chunks.length})</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Chunks preserve document name, page number, and section headers for accurate source citations.
                 </p>
               </div>
@@ -358,18 +362,18 @@ export default function MaterialsPage() {
                 {chunks.map((chk, i) => (
                   <div
                     key={chk.id || i}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 hover:border-indigo-300 transition-colors"
+                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 space-y-2 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-indigo-700 flex items-center gap-1">
+                      <span className="font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
                         <FileCheck className="w-3.5 h-3.5" />
                         {chk.sectionTitle || `Chunk #${i + 1}`}
                       </span>
-                      <span className="text-[11px] text-slate-500 font-medium">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                         Page {chk.pageNumber} • ~{chk.tokenEstimate} tokens
                       </span>
                     </div>
-                    <p className="text-xs text-slate-700 font-mono leading-relaxed bg-white p-3 rounded-lg border border-slate-200/80">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 font-mono leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200/80 dark:border-slate-800">
                       {chk.content}
                     </p>
                   </div>

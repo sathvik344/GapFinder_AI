@@ -92,7 +92,7 @@ export default function AssistantPage() {
         subtitle="Conversational tutor strictly grounded in your uploaded study material with source citations."
       />
 
-      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-6 min-h-0">
+      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 sm:p-6 min-h-0">
         {/* Messages Scroll Area */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {messages.map((msg) => (
@@ -103,7 +103,7 @@ export default function AssistantPage() {
               }`}
             >
               {msg.sender === "assistant" && (
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
@@ -112,20 +112,20 @@ export default function AssistantPage() {
                 className={`max-w-2xl p-4 rounded-2xl shadow-xs space-y-3 ${
                   msg.sender === "user"
                     ? "bg-indigo-600 text-white rounded-br-none"
-                    : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-none"
+                    : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800 rounded-bl-none"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{msg.text}</div>
+                <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
 
                 {/* Grounded Citation Pills */}
                 {msg.citations && msg.citations.length > 0 && (
-                  <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-1.5">
                     {msg.citations.map((c, i) => (
                       <button
                         key={i}
                         type="button"
                         onClick={() => setActiveCitation(c)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[10px] border border-indigo-100 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold text-[10px] border border-indigo-100 dark:border-indigo-800/60 transition-colors"
                       >
                         <BookOpen className="w-3 h-3" />
                         <span>
@@ -138,7 +138,7 @@ export default function AssistantPage() {
               </div>
 
               {msg.sender === "user" && (
-                <div className="w-8 h-8 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -150,7 +150,7 @@ export default function AssistantPage() {
               <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 flex items-center gap-2 text-slate-500">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2 text-slate-500 dark:text-slate-400">
                 <div className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                 <span>Searching vector corpus & synthesizing grounded explanation...</span>
               </div>
@@ -165,7 +165,7 @@ export default function AssistantPage() {
               key={idx}
               type="button"
               onClick={() => handleSendMessage(q)}
-              className="text-[11px] px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-slate-600 transition-all truncate max-w-xs"
+              className="text-[11px] px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all truncate max-w-xs"
             >
               {q}
             </button>
@@ -178,19 +178,20 @@ export default function AssistantPage() {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="bg-white rounded-2xl p-2 border border-slate-200/80 shadow-md flex items-center gap-2"
+          className="bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-200/80 dark:border-slate-800 shadow-md flex items-center gap-2 transition-colors"
         >
           <input
             type="text"
             placeholder="Ask a question about your uploaded materials (e.g. TCP Slow Start threshold)..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 px-4 py-2 text-xs outline-none bg-transparent"
+            className="flex-1 px-4 py-2 text-xs outline-none bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
           <button
             type="submit"
             disabled={loading || !inputText.trim()}
             className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40"
+            aria-label="Send message"
           >
             <Send className="w-4 h-4" />
           </button>

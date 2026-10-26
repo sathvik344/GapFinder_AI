@@ -13,19 +13,19 @@ export function TopicBadge({ level, score, className = "" }: TopicBadgeProps) {
 
   switch (level) {
     case "strong":
-      colorStyles = "bg-emerald-50 text-emerald-700 border-emerald-200";
+      colorStyles = "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60";
       label = "Strong";
       break;
     case "medium":
-      colorStyles = "bg-amber-50 text-amber-700 border-amber-200";
+      colorStyles = "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60";
       label = "Medium";
       break;
     case "weak":
-      colorStyles = "bg-rose-50 text-rose-700 border-rose-200";
+      colorStyles = "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60";
       label = "Weak";
       break;
     default:
-      colorStyles = "bg-slate-50 text-slate-600 border-slate-200";
+      colorStyles = "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700";
       label = "Untested";
       break;
   }
