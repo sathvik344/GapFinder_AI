@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { SourceCitationModal } from "@/components/SourceCitationModal";
 import { TopicBadge } from "@/components/TopicBadge";
 import {
   AlertTriangle,
@@ -12,15 +13,20 @@ import {
   BrainCircuit,
   CalendarCheck,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  FileText,
   HelpCircle,
   Sparkles,
+  XCircle,
 } from "lucide-react";
-import { GapAnalysisReport } from "@/lib/types";
+import { GapAnalysisReport, SourceCitation, Topic } from "@/lib/types";
 
 export default function GapReportPage() {
   const [report, setReport] = useState<GapAnalysisReport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "weak" | "medium" | "strong">("all");
+  const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+  const [activeCitation, setActiveCitation] = useState<SourceCitation | null>(null);
 
   useEffect(() => {
     fetch("/api/gap-report")
@@ -32,6 +38,10 @@ export default function GapReportPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const toggleEvidence = (id: string) => {
+    setExpandedTopicId((prev) => (prev === id ? null : id));
+  };
+
   const weakList = report?.weakTopics || [];
   const mediumList = report?.mediumTopics || [];
   const strongList = report?.strongTopics || [];
@@ -41,8 +51,8 @@ export default function GapReportPage() {
   return (
     <div className="flex-1 pb-16">
       <Header
-        title="Knowledge Gap Analysis Report"
-        subtitle="Objective mastery classifications (<60% Weak, 60–79% Medium, ≥80% Strong) calculated from actual quiz evaluations."
+        title="Knowledge Gap Analysis & Classification Audit"
+        subtitle="Objective mastery classifications (<60% Weak, 60–79% Medium, ≥80% Strong) with demonstrated evidence."
         actionButton={
           <Link
             href="/revision-plan"
@@ -58,7 +68,6 @@ export default function GapReportPage() {
         {/* Top Summary Banner */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            {/* Circular Readiness Indicator */}
             <div className="relative w-24 h-24 rounded-full border-4 border-slate-100 flex items-center justify-center shrink-0">
               <div
                 className={`w-20 h-20 rounded-full flex flex-col items-center justify-center ${
@@ -93,18 +102,17 @@ export default function GapReportPage() {
             </div>
           </div>
 
-          {/* Quick Metrics Pills */}
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-center min-w-[80px]">
-              <span className="text-xs text-rose-600 font-semibold block">Weak</span>
+              <span className="text-xs text-rose-600 font-semibold block">Weak (&lt;60%)</span>
               <span className="text-lg font-bold text-rose-700">{weakList.length}</span>
             </div>
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 text-center min-w-[80px]">
-              <span className="text-xs text-amber-600 font-semibold block">Medium</span>
+              <span className="text-xs text-amber-600 font-semibold block">Medium (60-79%)</span>
               <span className="text-lg font-bold text-amber-700">{mediumList.length}</span>
             </div>
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-center min-w-[80px]">
-              <span className="text-xs text-emerald-600 font-semibold block">Strong</span>
+              <span className="text-xs text-emerald-600 font-semibold block">Strong (≥80%)</span>
               <span className="text-lg font-bold text-emerald-700">{strongList.length}</span>
             </div>
           </div>
@@ -150,12 +158,21 @@ export default function GapReportPage() {
                   <span className="font-semibold text-slate-900 block mb-0.5">Recommended Action:</span>
                   <p className="text-slate-600">{gap.recommendation}</p>
                 </div>
+                {gap.citation && (
+                  <button
+                    onClick={() => setActiveCitation(gap.citation!)}
+                    className="pt-1 text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>Reference: {gap.citation.documentName} (Page {gap.citation.pageNumber})</span>
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Topic Classification Buckets */}
+        {/* Topic Classification Buckets with Audit Evidence */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Weak Topics */}
           <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm space-y-4">
@@ -168,25 +185,78 @@ export default function GapReportPage() {
             </div>
 
             <div className="space-y-3">
-              {weakList.map((t) => (
-                <div
-                  key={t.id}
-                  className="p-3.5 rounded-xl border border-rose-100 bg-rose-50/30 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{t.name}</span>
-                    <span className="text-xs font-bold text-rose-600">{t.currentScore}%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">{t.unit} • Weightage: {t.examWeightage}</p>
-                  <Link
-                    href={`/quiz?topicId=${t.id}`}
-                    className="inline-flex items-center gap-1 text-[11px] text-rose-600 font-semibold hover:underline"
+              {weakList.map((t) => {
+                const isExpanded = expandedTopicId === t.id;
+                return (
+                  <div
+                    key={t.id}
+                    className="p-3.5 rounded-xl border border-rose-200/80 bg-rose-50/30 space-y-2.5"
                   >
-                    <span>Practice Drill</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              ))}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900">{t.name}</span>
+                      <span className="text-xs font-bold text-rose-600">{t.currentScore}%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {t.unit} • Weightage: <strong>{t.examWeightage}</strong>
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleEvidence(t.id)}
+                      className="w-full flex items-center justify-between text-[11px] font-semibold text-rose-700 pt-1 border-t border-rose-100"
+                    >
+                      <span>Classification Evidence</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {isExpanded && t.classificationEvidence && (
+                      <div className="p-3 rounded-xl bg-white border border-rose-200 text-[11px] space-y-2 text-slate-700 animate-in fade-in duration-150">
+                        <div>
+                          <span className="font-bold text-rose-800 block">Threshold Rule:</span>
+                          <span>{t.classificationEvidence.thresholdRule}</span>
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-800 block">Assessment Marks:</span>
+                          <span>
+                            {t.classificationEvidence.marksEarned} / {t.classificationEvidence.questionsAttempted} marks ({t.classificationEvidence.accuracyPercentage}%)
+                          </span>
+                        </div>
+                        {t.classificationEvidence.identifiedDeficiencies.length > 0 && (
+                          <div>
+                            <span className="font-bold text-rose-700 block">Identified Gaps:</span>
+                            <ul className="list-disc pl-4 space-y-0.5 text-rose-900">
+                              {t.classificationEvidence.identifiedDeficiencies.map((d, i) => (
+                                <li key={i}>{d}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {t.classificationEvidence.sourceCitations && t.classificationEvidence.sourceCitations.length > 0 && (
+                          <div className="pt-1 border-t border-slate-100">
+                            <button
+                              onClick={() => setActiveCitation(t.classificationEvidence!.sourceCitations![0])}
+                              className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                            >
+                              <BookOpen className="w-3 h-3" />
+                              <span>Source: {t.classificationEvidence.sourceCitations[0].documentName} (p. {t.classificationEvidence.sourceCitations[0].pageNumber})</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="pt-1 flex items-center justify-between">
+                      <Link
+                        href={`/quiz?topicId=${t.id}`}
+                        className="inline-flex items-center gap-1 text-[11px] text-rose-600 font-semibold hover:underline"
+                      >
+                        <span>Targeted Practice Drill</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -201,25 +271,77 @@ export default function GapReportPage() {
             </div>
 
             <div className="space-y-3">
-              {mediumList.map((t) => (
-                <div
-                  key={t.id}
-                  className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/30 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{t.name}</span>
-                    <span className="text-xs font-bold text-amber-600">{t.currentScore}%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">{t.unit} • Weightage: {t.examWeightage}</p>
-                  <Link
-                    href={`/quiz?topicId=${t.id}`}
-                    className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-semibold hover:underline"
+              {mediumList.map((t) => {
+                const isExpanded = expandedTopicId === t.id;
+                return (
+                  <div
+                    key={t.id}
+                    className="p-3.5 rounded-xl border border-amber-200/80 bg-amber-50/30 space-y-2.5"
                   >
-                    <span>Elevate to Strong</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              ))}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900">{t.name}</span>
+                      <span className="text-xs font-bold text-amber-600">{t.currentScore}%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {t.unit} • Weightage: <strong>{t.examWeightage}</strong>
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleEvidence(t.id)}
+                      className="w-full flex items-center justify-between text-[11px] font-semibold text-amber-700 pt-1 border-t border-amber-100"
+                    >
+                      <span>Classification Evidence</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {isExpanded && t.classificationEvidence && (
+                      <div className="p-3 rounded-xl bg-white border border-amber-200 text-[11px] space-y-2 text-slate-700 animate-in fade-in duration-150">
+                        <div>
+                          <span className="font-bold text-amber-800 block">Threshold Rule:</span>
+                          <span>{t.classificationEvidence.thresholdRule}</span>
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-800 block">Assessment Marks:</span>
+                          <span>
+                            {t.classificationEvidence.marksEarned} / {t.classificationEvidence.questionsAttempted} marks ({t.classificationEvidence.accuracyPercentage}%)
+                          </span>
+                        </div>
+                        {t.classificationEvidence.demonstratedCompetencies.length > 0 && (
+                          <div>
+                            <span className="font-bold text-emerald-700 block">Mastered Concepts:</span>
+                            <ul className="list-disc pl-4 space-y-0.5 text-slate-600">
+                              {t.classificationEvidence.demonstratedCompetencies.map((c, i) => (
+                                <li key={i}>{c}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {t.classificationEvidence.identifiedDeficiencies.length > 0 && (
+                          <div>
+                            <span className="font-bold text-amber-700 block">Refinement Needed:</span>
+                            <ul className="list-disc pl-4 space-y-0.5 text-amber-900">
+                              {t.classificationEvidence.identifiedDeficiencies.map((d, i) => (
+                                <li key={i}>{d}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="pt-1 flex items-center justify-between">
+                      <Link
+                        href={`/quiz?topicId=${t.id}`}
+                        className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-semibold hover:underline"
+                      >
+                        <span>Elevate to Strong (≥80%)</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -234,24 +356,68 @@ export default function GapReportPage() {
             </div>
 
             <div className="space-y-3">
-              {strongList.map((t) => (
-                <div
-                  key={t.id}
-                  className="p-3.5 rounded-xl border border-emerald-100 bg-emerald-50/30 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{t.name}</span>
-                    <span className="text-xs font-bold text-emerald-600">{t.currentScore}%</span>
+              {strongList.map((t) => {
+                const isExpanded = expandedTopicId === t.id;
+                return (
+                  <div
+                    key={t.id}
+                    className="p-3.5 rounded-xl border border-emerald-200/80 bg-emerald-50/30 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900">{t.name}</span>
+                      <span className="text-xs font-bold text-emerald-600">{t.currentScore}%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">{t.unit} • Mastered</p>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleEvidence(t.id)}
+                      className="w-full flex items-center justify-between text-[11px] font-semibold text-emerald-700 pt-1 border-t border-emerald-100"
+                    >
+                      <span>Classification Evidence</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {isExpanded && t.classificationEvidence && (
+                      <div className="p-3 rounded-xl bg-white border border-emerald-200 text-[11px] space-y-2 text-slate-700 animate-in fade-in duration-150">
+                        <div>
+                          <span className="font-bold text-emerald-800 block">Threshold Rule:</span>
+                          <span>{t.classificationEvidence.thresholdRule}</span>
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-800 block">Assessment Marks:</span>
+                          <span>
+                            {t.classificationEvidence.marksEarned} / {t.classificationEvidence.questionsAttempted} marks ({t.classificationEvidence.accuracyPercentage}%)
+                          </span>
+                        </div>
+                        {t.classificationEvidence.demonstratedCompetencies.length > 0 && (
+                          <div>
+                            <span className="font-bold text-emerald-700 block">Confirmed Competencies:</span>
+                            <ul className="list-disc pl-4 space-y-0.5 text-slate-600">
+                              {t.classificationEvidence.demonstratedCompetencies.map((c, i) => (
+                                <li key={i}>{c}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <span className="text-[11px] text-emerald-700 font-medium block pt-1">
+                      Maintenance revision scheduled
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">{t.unit} • Mastered</p>
-                  <span className="text-[11px] text-emerald-700 font-medium block">
-                    Maintenance revision scheduled
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
+
+        {/* Source Citation Modal */}
+        <SourceCitationModal
+          citation={activeCitation}
+          onClose={() => setActiveCitation(null)}
+        />
       </div>
     </div>
   );

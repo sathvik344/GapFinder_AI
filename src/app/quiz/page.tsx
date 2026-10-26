@@ -424,24 +424,48 @@ export default function QuizPage() {
               </div>
             </div>
 
-            {/* Topic Breakdown */}
+            {/* Topic Breakdown with Documented Threshold Evidence */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-slate-900">Assessed Topic Changes</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Topic Performance & Classification Evidence</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Evaluated against documented thresholds: Weak (&lt;60%), Medium (60–79%), Strong (≥80%).
+                  </p>
+                </div>
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                  ✓ Revision Plan Re-synced
+                </span>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {quizResult.topicBreakdown.map((tb) => (
                   <div
                     key={tb.topicId}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between"
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2.5"
                   >
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 block">{tb.topicName}</span>
-                      <span className="text-[11px] text-slate-500">
-                        {tb.correctQuestions} / {tb.totalQuestions} questions credited
-                      </span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">{tb.topicName}</span>
+                        <span className="text-[11px] text-slate-500">
+                          {tb.evidence?.marksEarned ?? tb.correctQuestions} / {tb.totalQuestions} marks earned ({tb.score}%)
+                        </span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <TopicBadge level={tb.masteryLevel} />
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-slate-900 block">{tb.score}%</span>
-                      <TopicBadge level={tb.masteryLevel} />
+
+                    <div className="pt-2 border-t border-slate-200/60 text-[11px] space-y-1 text-slate-600">
+                      <div>
+                        <span className="font-semibold text-slate-800">Rule Applied: </span>
+                        <span>{tb.evidence?.thresholdRule || (tb.score >= 80 ? "Score ≥ 80% (Strong)" : tb.score >= 60 ? "Score 60%–79% (Medium)" : "Score < 60% (Weak)")}</span>
+                      </div>
+                      {tb.evidence?.identifiedDeficiencies && tb.evidence.identifiedDeficiencies.length > 0 && (
+                        <div className="text-rose-700 font-medium">
+                          Gap: {tb.evidence.identifiedDeficiencies[0]}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

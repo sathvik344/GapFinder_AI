@@ -29,6 +29,16 @@ export interface DocumentChunk {
 // Topic Types
 export type MasteryLevel = "weak" | "medium" | "strong" | "untested";
 
+export interface ClassificationEvidence {
+  thresholdRule: string; // e.g. "Weak (< 60%)"
+  accuracyPercentage: number;
+  questionsAttempted: number;
+  marksEarned: number;
+  demonstratedCompetencies: string[];
+  identifiedDeficiencies: string[];
+  sourceCitations?: SourceCitation[];
+}
+
 export interface Topic {
   id: string;
   name: string;
@@ -42,6 +52,7 @@ export interface Topic {
   masteryLevel: MasteryLevel;
   subtopics: string[];
   lastAssessedAt?: string;
+  classificationEvidence?: ClassificationEvidence;
 }
 
 // Quiz & Question Types
@@ -98,6 +109,7 @@ export interface QuizResult {
     totalQuestions: number;
     correctQuestions: number;
     masteryLevel: MasteryLevel;
+    evidence?: ClassificationEvidence;
   }[];
   evaluations: QuestionEvaluation[];
 }

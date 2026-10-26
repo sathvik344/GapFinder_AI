@@ -207,13 +207,49 @@ export function evaluateQuizSubmission(
 
   const topicBreakdown = Array.from(topicMap.entries()).map(([topicId, data]) => {
     const topicScore = Math.round((data.totalScore / data.count) * 100);
+    const masteryLevel = calculateMasteryLevel(topicScore, data.count);
+
+    const relatedEvals = evaluations.filter((ev) => {
+      const q = questions.find((item) => item.id === ev.questionId);
+      return q?.topicId === topicId;
+    });
+
+    const demonstratedCompetencies = relatedEvals
+      .filter((ev) => ev.isCorrect || ev.score >= 0.75)
+      .map((ev) => {
+        const q = questions.find((item) => item.id === ev.questionId);
+        return q?.question ? q.question.slice(0, 80) : "Correct concept understanding";
+      });
+
+    const identifiedDeficiencies = relatedEvals
+      .filter((ev) => !ev.isCorrect && ev.score < 0.75)
+      .map((ev) => ev.gapIdentified || `Missed benchmark: expected ${ev.correctAnswer.slice(0, 60)}`);
+
+    const citations = relatedEvals.flatMap((ev) => ev.sourceCitations);
+
+    const thresholdRule =
+      masteryLevel === "strong"
+        ? "Strong Mastery Threshold (Score ≥ 80%)"
+        : masteryLevel === "medium"
+        ? "Medium Mastery Threshold (Score 60% – 79%)"
+        : "Weak Mastery Threshold (Score < 60%)";
+
     return {
       topicId,
       topicName: data.topicName,
       score: topicScore,
       totalQuestions: data.count,
       correctQuestions: data.correctCount,
-      masteryLevel: calculateMasteryLevel(topicScore, data.count),
+      masteryLevel,
+      evidence: {
+        thresholdRule,
+        accuracyPercentage: topicScore,
+        questionsAttempted: data.count,
+        marksEarned: Math.round(data.totalScore * 10) / 10,
+        demonstratedCompetencies,
+        identifiedDeficiencies,
+        sourceCitations: citations,
+      },
     };
   });
 
