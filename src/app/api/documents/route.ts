@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chunkDocumentText } from "@/lib/rag";
+import { chunkDocumentPages } from "@/lib/rag";
+import { extractPdfPages, splitTextIntoPages } from "@/lib/pdfExtractor";
 import { StorageRepository } from "@/lib/storage";
 import { DocumentCategory, DocumentMetadata } from "@/lib/types";
 
@@ -28,9 +29,8 @@ export async function POST(req: NextRequest) {
     const directText = (formData.get("text") as string) || "";
 
     let docName = customTitle;
-    let extractedText = directText;
-    let pageCount = 1;
     let fileSize = directText.length;
+    let extractedDoc = { pageCount: 1, pages: [{ pageNumber: 1, text: directText }], fullText: directText };
 
     if (file) {
       docName = docName || file.name;
@@ -38,21 +38,16 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer());
 
       if (file.name.toLowerCase().endsWith(".pdf")) {
-        try {
-          const pdfParse = require("pdf-parse");
-          const pdfData = await pdfParse(buffer);
-          extractedText = pdfData.text || "";
-          pageCount = pdfData.numpages || 1;
-        } catch (pdfErr) {
-          console.warn("pdf-parse fallback extraction:", pdfErr);
-          extractedText = buffer.toString("utf-8");
-        }
+        extractedDoc = await extractPdfPages(buffer);
       } else {
-        extractedText = buffer.toString("utf-8");
+        const textContent = buffer.toString("utf-8");
+        extractedDoc = splitTextIntoPages(textContent);
       }
+    } else if (directText) {
+      extractedDoc = splitTextIntoPages(directText);
     }
 
-    if (!extractedText || extractedText.trim().length === 0) {
+    if (!extractedDoc.fullText || extractedDoc.fullText.trim().length === 0) {
       return NextResponse.json(
         { error: "No text could be extracted from the uploaded document." },
         { status: 400 }
@@ -60,21 +55,20 @@ export async function POST(req: NextRequest) {
     }
 
     const docId = `doc-${Date.now()}`;
-    const chunks = chunkDocumentText({
+    const chunks = chunkDocumentPages({
       documentId: docId,
       documentName: docName || "Uploaded Study Document",
       category,
-      rawText: extractedText,
-      pageNumber: 1,
-      chunkSize: 350,
-      overlap: 50,
+      pages: extractedDoc.pages,
+      chunkSize: 250,
+      overlap: 40,
     });
 
     const metadata: DocumentMetadata = {
       id: docId,
       name: docName || "Uploaded Study Document",
       category,
-      pageCount,
+      pageCount: extractedDoc.pageCount,
       uploadedAt: new Date().toISOString(),
       fileSize,
       chunkCount: chunks.length,
@@ -86,6 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       document: metadata,
+      pagesExtracted: extractedDoc.pageCount,
       chunksCreated: chunks.length,
     });
   } catch (err: any) {
